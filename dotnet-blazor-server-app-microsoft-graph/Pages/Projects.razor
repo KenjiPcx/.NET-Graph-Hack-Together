@@ -1,0 +1,83 @@
+﻿@page "/projects"
+@inject ProjectService projectService
+
+<div class="prose">
+    <div class="flex justify-between items-center w-full">
+        <p class="text-2xl font-bold">Ongoing Projects</p>
+        <label for="my-modal-4" class="btn btn-accent btn-sm">New</label>
+    </div>
+    <div>
+        @foreach (var project in projects)
+        {
+            <div tabindex="0" class="collapse collapse-arrow rounded-2xl bg-base-200 text-center mb-3">
+                <div class="collapse-title text-lg font-bold">
+                    @project.Name
+                </div>
+                <div class="collapse-content">
+                    <p>@project.Description</p>
+                    <p>@project.Id</p>
+                    <div class="btn btn-sm btn-error" @onclick="() => DeleteProject(project)">Delete</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <input type="checkbox" id="my-modal-4" class="modal-toggle" />
+    <label for="my-modal-4" class="modal cursor-pointer">
+        <label class="modal-box relative" for="">
+            <h3 class="text-xl font-bold">Add New Project</h3>
+            <div class="form-control w-full max-w-xs mb-3">
+                <label class="label">
+                    <span class="label-text">Project Name</span>
+                </label>
+                <input type="text" @bind="newProjectName" placeholder="Win in life 😉" class="input input-bordered w-full max-w-xs" />
+            </div>
+            <div class="form-control w-full max-w-xs mb-3">
+                <label class="label">
+                    <span class="label-text">Description</span>
+                </label>
+                <textarea @bind="newProjectDescription" class="textarea textarea-bordered h-24" placeholder="Build some high tech company and reach my exit plan"></textarea>
+            </div>
+            <div class="form-control w-full max-w-xs mb-10">
+                <label class="label">
+                    <span class="label-text">Important Note</span>
+                </label>
+                <input @bind="newProjectNote" type="text" placeholder="15% possible" class="input input-bordered w-full max-w-xs" />
+            </div>
+            <div class="flex justify-center">
+                <button @onclick="AddProject" class="btn btn-active btn-sm btn-wide btn-secondary mb-5">Add Project</button>
+            </div>
+        </label>
+    </label>
+</div>
+
+@code {
+    private List<Project> projects = new List<Project>();
+    private string newProjectName = "";
+    private string newProjectDescription = "";
+    private string newProjectNote = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        projects = await projectService.GetProjectsAsync();
+    }
+
+    private async Task AddProject()
+    {
+        var newProject = new Project
+            {
+                Name = newProjectName,
+                Description = newProjectDescription,
+                Status = newProjectNote
+            };
+        var project = await projectService.AddProjectAsync(newProject);
+        projects.Add(project);
+        Console.WriteLine(project);
+    }
+
+    private async Task DeleteProject(Project project)
+    {
+        await projectService.DeleteProjectAsync(project);
+        projects.Remove(project);
+    }
+}
