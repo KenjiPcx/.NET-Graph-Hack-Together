@@ -4,12 +4,17 @@
 
 <div class="h-screen">
     <Navbar />
-
     <main class="m-5 ">
-        <article class="h-full">
-            @Body
-        </article>
+        <AuthorizeView>
+            <Authorized>
+                <article class="h-full">
+                    @Body
+                </article>
+            </Authorized>
+            <NotAuthorized>
+                <p>You need to Login to use this app</p>
+                <a class="btn" href="MicrosoftIdentity/Account/SignIn">Log in</a>
+            </NotAuthorized>
+        </AuthorizeView>
     </main>
-
-    <Footer />
 </div>

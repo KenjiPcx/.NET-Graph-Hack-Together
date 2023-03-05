@@ -12,7 +12,7 @@
                 <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-300 rounded-box w-52">
                     <li>
                         <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                           Home
+                            Home
                         </NavLink>
                     </li>
                     <li>
@@ -28,7 +28,14 @@
         <a class="btn btn-ghost normal-case text-xl">Graph Assistant</a>
     </div>
     <div class="flex-none">
-        <AvatarMenu />
+        <AuthorizeView>
+            <Authorized>
+                <AvatarMenu />
+            </Authorized>
+            <NotAuthorized>
+                <a class="btn" href="MicrosoftIdentity/Account/SignIn">Log in</a>
+            </NotAuthorized>
+        </AuthorizeView>
     </div>
 </div>
 

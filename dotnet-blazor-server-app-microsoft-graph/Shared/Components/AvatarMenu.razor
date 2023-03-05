@@ -1,41 +1,63 @@
+@using Microsoft.Graph;
+@using Microsoft.Identity.Web;
+@attribute [Authorize]
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject GraphServiceClient GraphServiceClient
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 
-<AuthorizeView>
-    <Authorized>
-        <div class="dropdown dropdown-end">
-            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
-                <div class="w-10 rounded-full">
-                    <img src="/SoraProfile.png" alt="profile image" />
-                </div>
-            </label>
-            <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-300 rounded-box w-52">
-                <li><div class="badge">@this.shortUsername</div></li>
-                <li>
-                    <a class="justify-between">
-                        Profile
-                    </a>
-                </li>
-                <li><a>Settings</a></li>
-                <li><a href="MicrosoftIdentity/Account/SignOut">Logout</a></li>
-            </ul>
+<div class="dropdown dropdown-end">
+    <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+        <div class="w-10 rounded-full">
+            @if (photo != null)
+            {
+                <img style="margin: 5px 0; width: 150px" src="data:image/jpeg;base64, @photo" />
+            }
+            <img src="/SoraProfile.png" alt="profile image" />
         </div>
-    </Authorized>
-    <NotAuthorized>
-        <a class="btn" href="MicrosoftIdentity/Account/SignIn">Log in</a>
-    </NotAuthorized>
-</AuthorizeView>
+    </label>
+    <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-300 rounded-box w-52">
+        <li><div class="badge">@user.DisplayName</div></li>
+        <li><a href="MicrosoftIdentity/Account/SignOut">Logout</a></li>
+    </ul>
+</div>
+
 
 @code {
-    private string shortUsername;
+    User user = new User();
+    string photo = "";
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if (user != null)
+        try
         {
-            shortUsername = user.Identity.Name.Split("@")[0];
+            user = await GraphServiceClient.Me.Request().GetAsync();
+            photo = await GetPhoto();
         }
+        catch (Exception ex)
+        {
+            ConsentHandler.HandleException(ex);
+        }
+    }
+
+    protected async Task<string> GetPhoto()
+    {
+        string photo;
+
+        try
+        {
+            using (var photoStream = await GraphServiceClient.Me.Photo.Content.Request().GetAsync())
+            {
+                byte[] photoByte = ((System.IO.MemoryStream)photoStream).ToArray();
+                photo = Convert.ToBase64String(photoByte);
+                this.StateHasChanged();
+            }
+
+        }
+        catch (Exception)
+        {
+            photo = null;
+        }
+        return photo;
     }
 }
 

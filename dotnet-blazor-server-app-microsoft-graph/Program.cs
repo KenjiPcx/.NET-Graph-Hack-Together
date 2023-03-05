@@ -11,6 +11,7 @@ using ProductiGraph.Data;
 using ProductiGraph.Data.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Graph.ExternalConnectors;
+using OpenAI.GPT3.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
         .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
             .AddMicrosoftGraph(builder.Configuration.GetSection("DownstreamApi"))
             .AddInMemoryTokenCaches();
+
 builder.Services.AddControllersWithViews()
     .AddMicrosoftIdentityUI();
 
@@ -41,6 +43,7 @@ builder.Services.AddDbContext<GraphassDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddScoped<ProjectService>();
+builder.Services.AddOpenAIService();
 
 var app = builder.Build();
 
@@ -57,6 +60,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 app.MapBlazorHub();

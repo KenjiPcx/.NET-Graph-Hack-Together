@@ -2,30 +2,55 @@
 @using Microsoft.CognitiveServices.Speech.Audio;
 @using ProductiGraph.Shared.Components
 @inject IConfiguration configuration
+@inject ProjectService projectService
 @page "/"
 
-<div>
+<div class="flex justify-center mb-5">
+    <select class="select select-bordered w-full max-w-xs">
+        <option disabled selected>Choose a project</option>
+        @foreach (var name in projectNames)
+        {
+            <option>@name</option>
+        }
+    </select>
+</div>
+<div class="outline min-h-[62.5vh]">
     @foreach (var message in messages)
     {
-        <div>@message</div>
+        <div class="rounded-xl bg-blue-700 p-3 m-3">@message</div>
     }
 </div>
-<div>
-    <button @onclick="StartRecording">Start Recording</button>
-    <button @onclick="StopRecording">Stop Recording</button>
+<div class="flex justify-evenly w-full my-5">
+    @if (!speaking)
+    {
+        <button class="btn btn-success btn-sm" @onclick="StartRecording">Start Recording</button>
+    }
+    else
+    {
+        <button class="btn btn-error btn-sm" @onclick="StopRecording">Stop Recording</button>
+    }
+    <button class="btn btn-warning btn-sm" @onclick="ClearMessages">Clear Recording</button>
+</div>
+<div class="flex flex-col w-3/4 mx-auto justify-center items-center gap-3">
+    <button class="btn btn-primary btn-sm" @onclick="ClearMessages">Extract and Refine Todos</button>
+    <button class="btn btn-info btn-sm" @onclick="ClearMessages">Add to Microsoft Todo</button>
 </div>
 
 @code {
+    private bool speaking;
     private SpeechRecognizer? recognizer;
     private string speechKey = "";
     private string speechRegion = "";
     private List<string> messages = new List<string>();
+    private List<string> projectNames = new List<string>();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         speechKey = configuration["SPEECH_KEY"]!;
         speechRegion = configuration["SPEECH_REGION"]!;
-        base.OnInitialized();
+        var projects = await projectService.GetProjectsAsync();
+        projectNames = projects.Select(p => p.Name).ToList();
+        await base.OnInitializedAsync();
     }
 
     private async Task StartRecording()
@@ -34,7 +59,7 @@
         recognizer = new SpeechRecognizer(config);
 
         recognizer.Recognized += Recognizer_Recognized;
-
+        speaking = true;
         await recognizer.StartContinuousRecognitionAsync();
     }
 
@@ -53,9 +78,14 @@
         {
             return;
         }
-
+        speaking = false;
         await recognizer.StopContinuousRecognitionAsync();
         recognizer.Recognized -= Recognizer_Recognized;
+    }
+
+    private void ClearMessages()
+    {
+        messages = new List<string>();
     }
 }
 
