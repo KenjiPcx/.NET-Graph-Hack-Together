@@ -1,0 +1,41 @@
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+                <div class="w-10 rounded-full">
+                    <img src="/SoraProfile.png" alt="profile image" />
+                </div>
+            </label>
+            <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-300 rounded-box w-52">
+                <li><div class="badge">@this.shortUsername</div></li>
+                <li>
+                    <a class="justify-between">
+                        Profile
+                    </a>
+                </li>
+                <li><a>Settings</a></li>
+                <li><a href="MicrosoftIdentity/Account/SignOut">Logout</a></li>
+            </ul>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <a class="btn" href="MicrosoftIdentity/Account/SignIn">Log in</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string shortUsername;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user != null)
+        {
+            shortUsername = user.Identity.Name.Split("@")[0];
+        }
+    }
+}
+

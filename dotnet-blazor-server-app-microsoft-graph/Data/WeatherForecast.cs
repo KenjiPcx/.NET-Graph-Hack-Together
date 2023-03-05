@@ -1,4 +1,4 @@
-namespace BlazorSample.Data;
+namespace ProductiGraph.Data;
 
 public class WeatherForecast
 {

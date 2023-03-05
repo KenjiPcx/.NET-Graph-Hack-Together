@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Graph = Microsoft.Graph;
-using BlazorSample.Data;
+using ProductiGraph.Data;
+using ProductiGraph.Data.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Graph.ExternalConnectors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +35,12 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor()
     .AddMicrosoftIdentityConsentHandler();
 builder.Services.AddSingleton<WeatherForecastService>();
+
+builder.Services.AddDbContext<GraphassDbContext>(options =>
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services.AddScoped<ProjectService>();
 
 var app = builder.Build();
 

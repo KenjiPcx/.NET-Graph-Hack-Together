@@ -1,0 +1,21 @@
+{
+  "name": "dotnet-blazor-server-app-microsoft-graph",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.9",
+    "tailwindcss": "^3.2.7"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.13",
+    "daisyui": "^2.51.3",
+    "postcss": "^8.4.21"
+  }
+}
