@@ -1,9 +1,61 @@
-﻿@page "/"
+﻿@using Microsoft.CognitiveServices.Speech;
+@using Microsoft.CognitiveServices.Speech.Audio;
+@using ProductiGraph.Shared.Components
+@inject IConfiguration configuration
+@page "/"
 
-<PageTitle>Index</PageTitle>
+<div>
+    @foreach (var message in messages)
+    {
+        <div>@message</div>
+    }
+</div>
+<div>
+    <button @onclick="StartRecording">Start Recording</button>
+    <button @onclick="StopRecording">Stop Recording</button>
+</div>
 
-<h1>Hello, world!</h1>
+@code {
+    private SpeechRecognizer? recognizer;
+    private string speechKey = "";
+    private string speechRegion = "";
+    private List<string> messages = new List<string>();
 
-Welcome to your new app.
+    protected override void OnInitialized()
+    {
+        speechKey = configuration["SPEECH_KEY"]!;
+        speechRegion = configuration["SPEECH_REGION"]!;
+        base.OnInitialized();
+    }
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+    private async Task StartRecording()
+    {
+        var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
+        recognizer = new SpeechRecognizer(config);
+
+        recognizer.Recognized += Recognizer_Recognized;
+
+        await recognizer.StartContinuousRecognitionAsync();
+    }
+
+    private async void Recognizer_Recognized(object sender, SpeechRecognitionEventArgs e)
+    {
+        messages.Add(e.Result.Text);
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private async Task StopRecording()
+    {
+        if (recognizer == null)
+        {
+            return;
+        }
+
+        await recognizer.StopContinuousRecognitionAsync();
+        recognizer.Recognized -= Recognizer_Recognized;
+    }
+}
+
