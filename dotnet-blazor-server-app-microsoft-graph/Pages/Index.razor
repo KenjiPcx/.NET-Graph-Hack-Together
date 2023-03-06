@@ -1,18 +1,23 @@
-﻿@using Microsoft.AspNetCore.WebUtilities;
-@using Microsoft.CognitiveServices.Speech;
+﻿@using Microsoft.CognitiveServices.Speech;
 @using Microsoft.Graph;
 @using Microsoft.Identity.Web;
 @using OpenAI.GPT3.Interfaces;
 @using OpenAI.GPT3.ObjectModels.RequestModels;
 @using OpenAI.GPT3.ObjectModels;
 @using System.Diagnostics;
+@using ProductiGraph.Toast
+
 @inject IConfiguration configuration
-@inject ProjectService projectService
 @inject IOpenAIService openAiService
+@inject ProjectService projectService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject GraphServiceClient GraphServiceClient
 @inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
+@inject ToastService ToastService
+
 @page "/"
+
+<Toast />
 
 <div class="flex justify-center mb-5">
     <select class="select select-bordered w-full max-w-xs" @bind="selectedProject">
@@ -23,25 +28,27 @@
         }
     </select>
 </div>
-<div class="min-h-[62.5vh] relative">
+<div class="min-h-[62.5vh] relative flex justify-center">
     @if (messages.Count == 0)
     {
         <div class="my-auto flex flex-col justify-center items-center absolute top-1/2 -translate-y-1/2 prose mx-5 py-5 bg-base-200">
             <p class="text-2xl font-extrabold mb-3 underline">How to use</p>
             <ol class="mx-10 text-lg font-bold">
                 <li>Pick a project</li>
-                <li>Click the <span class="btn btn-sm btn-success mb-0">START RECORDING</span> button</li>
+                <li>Click the <button class="btn btn-sm btn-success mb-0" @onclick="StartRecording">START RECORDING</button> button</li>
                 <li>Talk about what you want to do with it today</li>
                 <li>Extract todos</li>
+                <li>Remove unwanted todos</li>
+                <li>Save to Microsoft todos</li>
             </ol>
         </div>
     }
     else
     {
-        <div class="p-3 m-5 bg-base-200 min-h-[62.5vh]">
+        <div class="p-3 m-5 bg-base-200 min-h-[62.5vh] w-full">
             @foreach (var message in messages)
             {
-                <div class="rounded-xl bg-blue-700 p-3 m-3">@message</div>
+                <div class="rounded-xl bg-blue-700 p-3 m-3 text-white">@message</div>
             }
         </div>
     }
@@ -86,7 +93,6 @@
     </div>
 }
 
-
 @code {
     private bool speaking;
     private SpeechRecognizer? recognizer;
@@ -111,6 +117,7 @@
     {
         if (selectedProject == "Choose a project")
         {
+            ToastService.ShowToast("You need to choose a project first!", ToastLevel.Error);
             return;
         }
 
@@ -120,6 +127,7 @@
         recognizer.Recognized += Recognizer_Recognized;
         speaking = true;
         await recognizer.StartContinuousRecognitionAsync();
+        ToastService.ShowToast("Started recording", ToastLevel.Info);
     }
 
     private async void Recognizer_Recognized(object sender, SpeechRecognitionEventArgs e)
@@ -140,41 +148,7 @@
         speaking = false;
         await recognizer.StopContinuousRecognitionAsync();
         recognizer.Recognized -= Recognizer_Recognized;
-    }
-
-    private async Task StartRequestChangeCommand()
-    {
-        if (selectedProject == "Choose a project")
-        {
-            return;
-        }
-
-        var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
-        recognizer = new SpeechRecognizer(config);
-
-        recognizer.Recognized += Recognizer_Recognized_RequestChangeCommand;
-        speaking = true;
-        await recognizer.StartContinuousRecognitionAsync();
-    }
-
-    private async void Recognizer_Recognized_RequestChangeCommand(object sender, SpeechRecognitionEventArgs e)
-    {
-        requestChangeCommand += e.Result.Text;
-        await InvokeAsync(() =>
-        {
-            StateHasChanged();
-        });
-    }
-
-    private async Task StopRequestChangeCommand()
-    {
-        if (recognizer == null)
-        {
-            return;
-        }
-        speaking = false;
-        await recognizer.StopContinuousRecognitionAsync();
-        recognizer.Recognized -= Recognizer_Recognized_RequestChangeCommand;
+        ToastService.ShowToast("Stopped recording", ToastLevel.Info);
     }
 
     private void ClearMessages()
@@ -186,8 +160,11 @@
     {
         if (messages.Count == 0)
         {
+            ToastService.ShowToast("There is nothing to extract from 😡", ToastLevel.Error);
             return;
         }
+
+        todos = new List<string>();
 
         var prompt = "Imagine you are my productivity assistant. Extract potential todos for me from the following text, give me the todo in plaintext without any number ordering or '-' at the start. The text is: ";
 
@@ -196,7 +173,6 @@
             if (message != "")
                 prompt += message;
         }
-
 
         var completionResult = openAiService.Completions.CreateCompletionAsStream(new CompletionCreateRequest()
             {
@@ -214,7 +190,7 @@
                 {
                     if (resMsg != "" && resMsg != "\n")
                     {
-                        resMsg.Replace("-", "");
+                        resMsg = resMsg.Replace("-", "");
                         todos.Add(resMsg);
                         await InvokeAsync(() =>
                         {
@@ -233,12 +209,13 @@
             {
                 if (completion.Error == null)
                 {
+                    ToastService.ShowToast($"Error 🤬: {completion.Error.Code}: {completion.Error.Message}", ToastLevel.Error);
                     throw new Exception("Unknown Error");
                 }
-                Console.WriteLine($"{completion.Error.Code}: {completion.Error.Message}");
             }
         }
         extractedTodos = true;
+        ToastService.ShowToast("Successfully extracted todos 😀, click on the todo to remove it", ToastLevel.Success);
     }
 
     private void RemoveTodo(string todo)
@@ -248,24 +225,42 @@
 
     private async Task AddToMicrosoftTodos()
     {
-        var lists = await GraphServiceClient.Me.Todo.Lists.Request().GetAsync();
-        var list = lists.FirstOrDefault(l => l.DisplayName == selectedProject);
-
-        // Create a list if it is not found
-        if (list == null)
+        if (selectedProject == "Choose a project")
         {
-            var requestBody = new TodoTaskList
-                {
-                    DisplayName = selectedProject,
-                };
-            list = await GraphServiceClient.Me.Todo.Lists.Request().AddAsync(requestBody);
+            ToastService.ShowToast("We need a project to add the tasks to 😕", ToastLevel.Warning);
+            return;
         }
 
-        foreach (var todo in todos)
+        try
         {
-            await CreateMicrosoftTodo(list.Id, todo);
-        }
+            var lists = await GraphServiceClient.Me.Todo.Lists.Request().GetAsync();
+            var list = lists.FirstOrDefault(l => l.DisplayName == selectedProject);
 
+            // Create a list if it is not found
+            if (list == null)
+            {
+                ToastService.ShowToast("Project not found in todos 😵, creating one right now 🏃🏼‍♂️", ToastLevel.Info);
+                var requestBody = new TodoTaskList
+                    {
+                        DisplayName = selectedProject,
+                    };
+                list = await GraphServiceClient.Me.Todo.Lists.Request().AddAsync(requestBody);
+                ToastService.ShowToast("Successfully created project list 😁", ToastLevel.Success);
+            }
+
+            foreach (var todo in todos)
+            {
+                await CreateMicrosoftTodo(list.Id, todo);
+            }
+            ToastService.ShowToast($"Successfully added todos to '{selectedProject}' 😁", ToastLevel.Success);
+            todos = new List<string>();
+            messages = new List<string>();
+            extractedTodos = false;
+        }
+        catch (Exception ex)
+        {
+            ConsentHandler.HandleException(ex);
+        }
     }
 
     private async Task CreateMicrosoftTodo(string listId, string todo)

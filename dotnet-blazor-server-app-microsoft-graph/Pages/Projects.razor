@@ -1,7 +1,7 @@
 ﻿@page "/projects"
 @inject ProjectService projectService
 
-<div class="prose">
+<div class="prose mx-auto">
     <div class="flex justify-between items-center w-full">
         <p class="text-2xl font-bold">Ongoing Projects</p>
         <label for="my-modal-4" class="btn btn-accent btn-sm">New</label>
@@ -15,7 +15,6 @@
                 </div>
                 <div class="collapse-content">
                     <p>@project.Description</p>
-                    <p>@project.Id</p>
                     <div class="btn btn-sm btn-error" @onclick="() => DeleteProject(project)">Delete</div>
                 </div>
             </div>
@@ -24,7 +23,7 @@
 
     <input type="checkbox" id="my-modal-4" class="modal-toggle" />
     <label for="my-modal-4" class="modal cursor-pointer">
-        <label class="modal-box relative" for="">
+        <label class="modal-box relative flex flex-col items-center" for="">
             <h3 class="text-xl font-bold">Add New Project</h3>
             <div class="form-control w-full max-w-xs mb-3">
                 <label class="label">

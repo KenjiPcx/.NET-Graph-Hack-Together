@@ -9,6 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Toast\Toast.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Toast\Toast.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Betalgo.OpenAI.GPT3" Version="6.7.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.2" NoWarn="NU1605" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="7.0.2" NoWarn="NU1605" />
