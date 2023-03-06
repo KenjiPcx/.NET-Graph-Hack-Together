@@ -5,6 +5,7 @@ using ProductiGraph.Data;
 using ProductiGraph.Data.Services;
 using Microsoft.EntityFrameworkCore;
 using OpenAI.GPT3.Extensions;
+using ProductiGraph.Toast;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,13 +30,13 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor()
     .AddMicrosoftIdentityConsentHandler();
-builder.Services.AddSingleton<WeatherForecastService>();
 
 builder.Services.AddDbContext<GraphassDbContext>(options =>
 {
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddScoped<ProjectService>();
+builder.Services.AddScoped<ToastService>();
 builder.Services.AddOpenAIService();
 
 var app = builder.Build();
