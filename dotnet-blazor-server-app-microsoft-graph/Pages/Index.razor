@@ -1,12 +1,21 @@
-﻿@using Microsoft.CognitiveServices.Speech;
-@using Microsoft.CognitiveServices.Speech.Audio;
-@using ProductiGraph.Shared.Components
+﻿@using Microsoft.AspNetCore.WebUtilities;
+@using Microsoft.CognitiveServices.Speech;
+@using Microsoft.Graph;
+@using Microsoft.Identity.Web;
+@using OpenAI.GPT3.Interfaces;
+@using OpenAI.GPT3.ObjectModels.RequestModels;
+@using OpenAI.GPT3.ObjectModels;
+@using System.Diagnostics;
 @inject IConfiguration configuration
 @inject ProjectService projectService
+@inject IOpenAIService openAiService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject GraphServiceClient GraphServiceClient
+@inject MicrosoftIdentityConsentAndConditionalAccessHandler ConsentHandler
 @page "/"
 
 <div class="flex justify-center mb-5">
-    <select class="select select-bordered w-full max-w-xs">
+    <select class="select select-bordered w-full max-w-xs" @bind="selectedProject">
         <option disabled selected>Choose a project</option>
         @foreach (var name in projectNames)
         {
@@ -14,13 +23,30 @@
         }
     </select>
 </div>
-<div class="outline min-h-[62.5vh]">
-    @foreach (var message in messages)
+<div class="min-h-[62.5vh] relative">
+    @if (messages.Count == 0)
     {
-        <div class="rounded-xl bg-blue-700 p-3 m-3">@message</div>
+        <div class="my-auto flex flex-col justify-center items-center absolute top-1/2 -translate-y-1/2 prose mx-5 py-5 bg-base-200">
+            <p class="text-2xl font-extrabold mb-3 underline">How to use</p>
+            <ol class="mx-10 text-lg font-bold">
+                <li>Pick a project</li>
+                <li>Click the <span class="btn btn-sm btn-success mb-0">START RECORDING</span> button</li>
+                <li>Talk about what you want to do with it today</li>
+                <li>Extract todos</li>
+            </ol>
+        </div>
+    }
+    else
+    {
+        <div class="p-3 m-5 bg-base-200 min-h-[62.5vh]">
+            @foreach (var message in messages)
+            {
+                <div class="rounded-xl bg-blue-700 p-3 m-3">@message</div>
+            }
+        </div>
     }
 </div>
-<div class="flex justify-evenly w-full my-5">
+<div class="flex flex-wrap justify-evenly w-full my-5 gap-y-5">
     @if (!speaking)
     {
         <button class="btn btn-success btn-sm" @onclick="StartRecording">Start Recording</button>
@@ -30,19 +56,48 @@
         <button class="btn btn-error btn-sm" @onclick="StopRecording">Stop Recording</button>
     }
     <button class="btn btn-warning btn-sm" @onclick="ClearMessages">Clear Recording</button>
+    <button class="btn btn-primary btn-sm" @onclick="ExtractTodos">Extract Todos</button>
 </div>
-<div class="flex flex-col w-3/4 mx-auto justify-center items-center gap-3">
-    <button class="btn btn-primary btn-sm" @onclick="ClearMessages">Extract and Refine Todos</button>
-    <button class="btn btn-info btn-sm" @onclick="ClearMessages">Add to Microsoft Todo</button>
+<div class="flex flex-col w-3/4 mx-auto justify-center items-center">
 </div>
+<div>
+    @if (todos.Count > 0)
+    {
+        <div class="p-3 m-5 bg-base-200">
+            @foreach (var todo in todos)
+            {
+                <div class="collapse rounded-xl">
+                    <input type="checkbox" class="peer" />
+                    <div class="collapse-title bg-primary text-primary-content peer-checked:bg-secondary peer-checked:text-secondary-content rounded-xl  p-3 m-3">
+                        @todo
+                    </div>
+                    <div class="collapse-content bg-base-200 text-primary-content peer-checked:bg-base-200 peer-checked:text-secondary-content">
+                        <btn class="btn btn-sm btn-error" @onclick="() => RemoveTodo(todo)">Remove todo</btn>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+@if (extractedTodos)
+{
+    <div class="flex flex-col w-3/4 mx-auto justify-center items-center">
+        <button class="btn btn-info btn-sm mb-10 " @onclick="AddToMicrosoftTodos">Add to Microsoft Todo</button>
+    </div>
+}
+
 
 @code {
     private bool speaking;
     private SpeechRecognizer? recognizer;
     private string speechKey = "";
     private string speechRegion = "";
-    private List<string> messages = new List<string>();
+    private List<string> messages = new List<string> { "Today I am going to talk to Cayden about smart glasses, I need to go through my ideas one more time before presenting it to him", "I need to narrow down my idea so I can start working on my MVP,", "I need to research some smart glasses designs so I can build on it " };
     private List<string> projectNames = new List<string>();
+    private string selectedProject = "Choose a project";
+    private List<string> todos = new List<string>();
+    private bool extractedTodos = false;
+    private string requestChangeCommand = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,11 +105,15 @@
         speechRegion = configuration["SPEECH_REGION"]!;
         var projects = await projectService.GetProjectsAsync();
         projectNames = projects.Select(p => p.Name).ToList();
-        await base.OnInitializedAsync();
     }
 
     private async Task StartRecording()
     {
+        if (selectedProject == "Choose a project")
+        {
+            return;
+        }
+
         var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
         recognizer = new SpeechRecognizer(config);
 
@@ -83,9 +142,139 @@
         recognizer.Recognized -= Recognizer_Recognized;
     }
 
+    private async Task StartRequestChangeCommand()
+    {
+        if (selectedProject == "Choose a project")
+        {
+            return;
+        }
+
+        var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
+        recognizer = new SpeechRecognizer(config);
+
+        recognizer.Recognized += Recognizer_Recognized_RequestChangeCommand;
+        speaking = true;
+        await recognizer.StartContinuousRecognitionAsync();
+    }
+
+    private async void Recognizer_Recognized_RequestChangeCommand(object sender, SpeechRecognitionEventArgs e)
+    {
+        requestChangeCommand += e.Result.Text;
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private async Task StopRequestChangeCommand()
+    {
+        if (recognizer == null)
+        {
+            return;
+        }
+        speaking = false;
+        await recognizer.StopContinuousRecognitionAsync();
+        recognizer.Recognized -= Recognizer_Recognized_RequestChangeCommand;
+    }
+
     private void ClearMessages()
     {
         messages = new List<string>();
+    }
+
+    private async Task ExtractTodos()
+    {
+        if (messages.Count == 0)
+        {
+            return;
+        }
+
+        var prompt = "Imagine you are my productivity assistant. Extract potential todos for me from the following text, give me the todo in plaintext without any number ordering or '-' at the start. The text is: ";
+
+        foreach (var message in messages)
+        {
+            if (message != "")
+                prompt += message;
+        }
+
+
+        var completionResult = openAiService.Completions.CreateCompletionAsStream(new CompletionCreateRequest()
+            {
+                Prompt = prompt,
+                MaxTokens = 1000
+            }, Models.TextDavinciV3);
+
+        var resMsg = "";
+        await foreach (var completion in completionResult)
+        {
+            if (completion.Successful)
+            {
+                var res = completion.Choices.FirstOrDefault()?.Text;
+                if (res == "\n")
+                {
+                    if (resMsg != "" && resMsg != "\n")
+                    {
+                        resMsg.Replace("-", "");
+                        todos.Add(resMsg);
+                        await InvokeAsync(() =>
+                        {
+                            StateHasChanged();
+                        });
+                    }
+                    resMsg = "";
+                }
+                else
+                {
+                    resMsg += res;
+                }
+                Debug.Write(completion.Choices.FirstOrDefault()?.Text);
+            }
+            else
+            {
+                if (completion.Error == null)
+                {
+                    throw new Exception("Unknown Error");
+                }
+                Console.WriteLine($"{completion.Error.Code}: {completion.Error.Message}");
+            }
+        }
+        extractedTodos = true;
+    }
+
+    private void RemoveTodo(string todo)
+    {
+        todos = todos.Where(t => t != todo).ToList();
+    }
+
+    private async Task AddToMicrosoftTodos()
+    {
+        var lists = await GraphServiceClient.Me.Todo.Lists.Request().GetAsync();
+        var list = lists.FirstOrDefault(l => l.DisplayName == selectedProject);
+
+        // Create a list if it is not found
+        if (list == null)
+        {
+            var requestBody = new TodoTaskList
+                {
+                    DisplayName = selectedProject,
+                };
+            list = await GraphServiceClient.Me.Todo.Lists.Request().AddAsync(requestBody);
+        }
+
+        foreach (var todo in todos)
+        {
+            await CreateMicrosoftTodo(list.Id, todo);
+        }
+
+    }
+
+    private async Task CreateMicrosoftTodo(string listId, string todo)
+    {
+        var requestBody = new TodoTask
+            {
+                Title = todo,
+            };
+        await GraphServiceClient.Me.Todo.Lists[listId].Tasks.Request().AddAsync(requestBody);
     }
 }
 

@@ -1,16 +1,9 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Graph = Microsoft.Graph;
 using ProductiGraph.Data;
 using ProductiGraph.Data.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Graph.ExternalConnectors;
 using OpenAI.GPT3.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
