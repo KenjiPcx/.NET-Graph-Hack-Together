@@ -4250,6 +4250,14 @@ html {
   top: 50%;
 }
 
+.z-0 {
+  z-index: 0;
+}
+
+.z-10 {
+  z-index: 10;
+}
+
 .m-3 {
   margin: 0.75rem;
 }
@@ -4273,6 +4281,16 @@ html {
   margin-right: auto;
 }
 
+.my-0 {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.my-3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .my-5 {
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
@@ -4281,20 +4299,6 @@ html {
 .my-auto {
   margin-top: auto;
   margin-bottom: auto;
-}
-
-.my-3 {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.my-0 {
-  margin-top: 0px;
-  margin-bottom: 0px;
-}
-
-.mb-0 {
-  margin-bottom: 0px;
 }
 
 .mb-10 {
@@ -4414,10 +4418,6 @@ html {
   gap: 1.25rem;
 }
 
-.gap-3 {
-  gap: 0.75rem;
-}
-
 .gap-y-5 {
   row-gap: 1.25rem;
 }
@@ -4474,10 +4474,6 @@ html {
 
 .text-center {
   text-align: center;
-}
-
-.align-middle {
-  vertical-align: middle;
 }
 
 .text-2xl {
@@ -4568,19 +4564,4 @@ html {
 
 .blazor-error-boundary::after {
   content: "An error has occurred.";
-}
-
-.peer:checked ~ .peer-checked\:bg-base-200 {
-  --tw-bg-opacity: 1;
-  background-color: hsl(var(--b2, var(--b1)) / var(--tw-bg-opacity));
-}
-
-.peer:checked ~ .peer-checked\:bg-secondary {
-  --tw-bg-opacity: 1;
-  background-color: hsl(var(--s) / var(--tw-bg-opacity));
-}
-
-.peer:checked ~ .peer-checked\:text-secondary-content {
-  --tw-text-opacity: 1;
-  color: hsl(var(--sc) / var(--tw-text-opacity));
 }

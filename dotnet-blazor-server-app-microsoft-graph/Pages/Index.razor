@@ -1,4 +1,5 @@
 ﻿@using Microsoft.CognitiveServices.Speech;
+@using Microsoft.CognitiveServices.Speech.Audio;
 @using Microsoft.Graph;
 @using Microsoft.Identity.Web;
 @using OpenAI.GPT3.Interfaces;
@@ -65,7 +66,7 @@
 </div>
 <div class="flex flex-col w-3/4 mx-auto justify-center items-center">
 </div>
-<div>
+<div class="z-10">
     @if (todos.Count > 0)
     {
         <div class="p-3 m-5 bg-base-200">
@@ -130,7 +131,8 @@
         }
 
         var config = SpeechConfig.FromSubscription(speechKey, speechRegion);
-        recognizer = new SpeechRecognizer(config);
+        var audioConfig = AudioConfig.FromDefaultMicrophoneInput();
+        recognizer = new SpeechRecognizer(config, audioConfig);
 
         recognizer.Recognized += Recognizer_Recognized;
         speaking = true;
