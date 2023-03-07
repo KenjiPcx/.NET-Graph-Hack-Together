@@ -102,17 +102,16 @@
     private string speechRegion = "";
     private List<string> messages = new List<string> 
     { 
-        "Today I am going to be doing some research on Microsoft Graph and see its capabilities", 
-        "I need to think of some usecases of Microsoft Graph", 
+        "Today I am going to be doing some research on Microsoft Graph and see its capabilities, I need to think of some usecases of Microsoft Graph", 
         "After that, I need to find out how to code in .NET", 
         "There's so much to learn about .NET, maybe I should start with C# first",
-        "I need to learn how to use Blazor and how to use the Microsoft Graph API" 
+        "I need to learn how to use Blazor and how to use the Microsoft Graph API, I think I can watch the live stream sessions from the hackathon to learn about Microsoft Graph, and I saw that there was the template for .NET Blazor integrated with authentication and Microsoft Graph so I should just use it to start my project",
+        "I think I want to implement an AI project with OpenAI API's new update, I think I can use the OpenAI GPT-3 API to generate some text, I need to learn how to use it first though" 
     };
     private List<string> projectNames = new List<string>();
     private string selectedProject = "Choose a project";
     private List<string> todos = new List<string>();
     private bool extractedTodos = false;
-    private string requestChangeCommand = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,7 +135,7 @@
 
         recognizer.Recognized += Recognizer_Recognized;
         speaking = true;
-        await recognizer.StartContinuousRecognitionAsync();
+        await recognizer.StartContinuousRecognitionAsync(); 
         ToastService.ShowToast("Started recording", ToastLevel.Info);
     }
 
