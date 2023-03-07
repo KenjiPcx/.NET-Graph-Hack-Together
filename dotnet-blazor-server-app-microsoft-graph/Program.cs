@@ -46,7 +46,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<GraphassDbContext>();
 
     // Ensure that the database is migrated to the latest version
-    await dbContext.Database.MigrateAsync();
+    await dbContext.Database.EnsureCreatedAsync();
 }
 
 // Configure the HTTP request pipeline.
