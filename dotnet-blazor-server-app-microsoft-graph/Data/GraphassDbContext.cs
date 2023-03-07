@@ -31,14 +31,11 @@ namespace ProductiGraph.Data
         {
             return new List<Project>
             {
-                new Project { Id = 1, Name = "Build Personal Productivity Machine", Description = "I need a personal second brain to take care of my workflow efficiently", Status = "Just created", Completed = false },
-                new Project { Id = 2, Name = "Mentoring with Sam", Description = "Learn about system design", Status = "Just created", Completed = false },
-                new Project { Id = 3, Name = "Collab with Cayden", Description = "Thinking of making a gamified system for smart glasses", Status = "Just created", Completed = false },
-                new Project { Id = 4, Name = "Research with Jina", Description = "Learn about human centered design", Status = "Just created", Completed = false },
-                new Project { Id = 5, Name = "Plan Gold Engagement with Jennifer", Description = "We need to start getting UK ambassadors engaged with extra activities", Status = "Just created", Completed = false },
-                new Project { Id = 6, Name = "Bring GTA UI to life", Description = "GTA is the best grinding simulator", Status = "Just created", Completed = false },
-                new Project { Id = 7, Name = "Learn AI and ML", Description = "AI and ML is the future, time to pick up some skills", Status = "Just created", Completed = false },
-                new Project { Id = 8, Name = "Prepare content with Baki", Description = "Get involved with the community", Status = "Just created", Completed = false },
+                new Project { Id = 1, Name = "Microsoft Graph .NET hackathon", Description = "A hackathon to learn about Microsoft Graph using .NET" },
+                new Project { Id = 2, Name = "Microsoft Imagine Cup", Description = "Microsoft's annual hackathon to build a solution using Microsoft Azure"},
+                new Project { Id = 3, Name = "Microsoft Learn Student Ambassadors", Description = "Do cool things with Microsoft as a student"},
+                new Project { Id = 4, Name = "Microsoft MVP Mentoring", Description = "Get advice about anything from a Microsoft MVP"},
+                new Project { Id = 5, Name = "Social Impact Project", Description = "Build something for the Microsoft Community"}
             };
         }
         #endregion

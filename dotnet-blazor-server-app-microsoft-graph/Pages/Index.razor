@@ -17,8 +17,6 @@
 
 @page "/"
 
-<Toast />
-
 <div class="flex justify-center mb-5">
     <select class="select select-bordered w-full max-w-xs" @bind="selectedProject">
         <option disabled selected>Choose a project</option>
@@ -35,7 +33,7 @@
             <p class="text-2xl font-extrabold mb-3 underline">How to use</p>
             <ol class="mx-10 text-lg font-bold">
                 <li>Pick a project</li>
-                <li>Click the <button class="btn btn-sm btn-success mb-0" @onclick="StartRecording">START RECORDING</button> button</li>
+                <li>Click the <button class="btn btn-sm btn-success my-0">START RECORDING</button> button</li>
                 <li>Talk about what you want to do with it today</li>
                 <li>Extract todos</li>
                 <li>Remove unwanted todos</li>
@@ -73,12 +71,14 @@
         <div class="p-3 m-5 bg-base-200">
             @foreach (var todo in todos)
             {
-                <div class="collapse rounded-xl">
+                <div class="collapse rounded-xl mx-5 collapse-arrow ">
                     <input type="checkbox" class="peer" />
-                    <div class="collapse-title bg-primary text-primary-content peer-checked:bg-secondary peer-checked:text-secondary-content rounded-xl  p-3 m-3">
-                        @todo
+                    <div class="collapse-title bg-primary text-primary-content rounded-xl w-full p-3 my-3">
+                        <div class="flex items-center h-full">
+                            @todo
+                        </div>
                     </div>
-                    <div class="collapse-content bg-base-200 text-primary-content peer-checked:bg-base-200 peer-checked:text-secondary-content">
+                    <div class="collapse-content bg-base-200 text-primary-content">
                         <btn class="btn btn-sm btn-error" @onclick="() => RemoveTodo(todo)">Remove todo</btn>
                     </div>
                 </div>
@@ -88,8 +88,9 @@
 </div>
 @if (extractedTodos)
 {
-    <div class="flex flex-col w-3/4 mx-auto justify-center items-center">
-        <button class="btn btn-info btn-sm mb-10 " @onclick="AddToMicrosoftTodos">Add to Microsoft Todo</button>
+    <div class="flex flex-col w-3/4 mx-auto justify-center items-center gap-5">
+        <button class="btn btn-info btn-sm" @onclick="AddToMicrosoftTodos">Add to Microsoft Todo</button>
+        <button class="btn btn-warning btn-sm mb-10" @onclick="ClearTodos">Clear todos</button>
     </div>
 }
 
@@ -98,7 +99,14 @@
     private SpeechRecognizer? recognizer;
     private string speechKey = "";
     private string speechRegion = "";
-    private List<string> messages = new List<string> { "Today I am going to talk to Cayden about smart glasses, I need to go through my ideas one more time before presenting it to him", "I need to narrow down my idea so I can start working on my MVP,", "I need to research some smart glasses designs so I can build on it " };
+    private List<string> messages = new List<string> 
+    { 
+        "Today I am going to be doing some research on Microsoft Graph and see its capabilities", 
+        "I need to think of some usecases of Microsoft Graph", 
+        "After that, I need to find out how to code in .NET", 
+        "There's so much to learn about .NET, maybe I should start with C# first",
+        "I need to learn how to use Blazor and how to use the Microsoft Graph API" 
+    };
     private List<string> projectNames = new List<string>();
     private string selectedProject = "Choose a project";
     private List<string> todos = new List<string>();
@@ -117,7 +125,7 @@
     {
         if (selectedProject == "Choose a project")
         {
-            ToastService.ShowToast("You need to choose a project first!", ToastLevel.Error);
+            ToastService.ShowToast("You need to choose a project first! 😕", ToastLevel.Error);
             return;
         }
 
@@ -154,6 +162,7 @@
     private void ClearMessages()
     {
         messages = new List<string>();
+        ToastService.ShowToast("Cleared messages! 😁", ToastLevel.Info);
     }
 
     private async Task ExtractTodos()
@@ -221,6 +230,12 @@
     private void RemoveTodo(string todo)
     {
         todos = todos.Where(t => t != todo).ToList();
+    }
+
+    private void ClearTodos() {
+        todos = new List<string>();
+        extractedTodos = false;
+        ToastService.ShowToast("Cleared todos! 😁", ToastLevel.Info);
     }
 
     private async Task AddToMicrosoftTodos()

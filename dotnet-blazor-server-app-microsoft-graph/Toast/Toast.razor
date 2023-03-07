@@ -2,10 +2,10 @@
 @implements IDisposable
 
 <div class="alert-info alert-success alert-warning alert-error hidden"></div>
-<div class="toast toast-top toast-end">
+<div tabindex="0" class="toast toast-bottom">
     <div class="alert alert-@type @(_isVisible ? "" : "hidden") flex flex-col">
-        <h5>@_heading</h5>
-        <p>@_message</p>
+        <p class="text-lg font-bold">@_heading</p>
+        <p class="text-lg">@_message</p>
     </div>
 </div>
 

@@ -1,5 +1,9 @@
-﻿@page "/projects"
+﻿@using ProductiGraph.Toast
+
 @inject ProjectService projectService
+@inject ToastService ToastService
+
+@page "/projects"
 
 <div class="prose mx-auto">
     <div class="flex justify-between items-center w-full">
@@ -10,6 +14,7 @@
         @foreach (var project in projects)
         {
             <div tabindex="0" class="collapse collapse-arrow rounded-2xl bg-base-200 text-center mb-3">
+                <input type="checkbox" class="peer" />
                 <div class="collapse-title text-lg font-bold">
                     @project.Name
                 </div>
@@ -37,14 +42,8 @@
                 </label>
                 <textarea @bind="newProjectDescription" class="textarea textarea-bordered h-24" placeholder="Build some high tech company and reach my exit plan"></textarea>
             </div>
-            <div class="form-control w-full max-w-xs mb-10">
-                <label class="label">
-                    <span class="label-text">Important Note</span>
-                </label>
-                <input @bind="newProjectNote" type="text" placeholder="15% possible" class="input input-bordered w-full max-w-xs" />
-            </div>
             <div class="flex justify-center">
-                <button @onclick="AddProject" class="btn btn-active btn-sm btn-wide btn-secondary mb-5">Add Project</button>
+                <button @onclick="AddProject" class="btn btn-active btn-sm btn-wide btn-secondary my-5">Add Project</button>
             </div>
         </label>
     </label>
@@ -54,7 +53,6 @@
     private List<Project> projects = new List<Project>();
     private string newProjectName = "";
     private string newProjectDescription = "";
-    private string newProjectNote = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,20 +61,43 @@
 
     private async Task AddProject()
     {
-        var newProject = new Project
-            {
-                Name = newProjectName,
-                Description = newProjectDescription,
-                Status = newProjectNote
-            };
-        var project = await projectService.AddProjectAsync(newProject);
-        projects.Add(project);
-        Console.WriteLine(project);
+        if (newProjectName == "" || newProjectDescription == "")
+        {
+            ToastService.ShowToast("Project needs a name and a description! 🫠", ToastLevel.Error);
+            return;
+        }
+
+        try
+        {
+            var newProject = new Project
+                {
+                    Name = newProjectName,
+                    Description = newProjectDescription,
+                };
+            var project = await projectService.AddProjectAsync(newProject);
+            projects.Add(project);
+            newProjectName = "";
+            newProjectDescription = "";
+            ToastService.ShowToast($"Added project {newProject.Name}", ToastLevel.Success);
+
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowToast($"Failed to add project {newProjectName}, {ex.Message}", ToastLevel.Error);
+        }
     }
 
     private async Task DeleteProject(Project project)
     {
-        await projectService.DeleteProjectAsync(project);
-        projects.Remove(project);
+        try
+        {
+            await projectService.DeleteProjectAsync(project);
+            projects.Remove(project);
+            ToastService.ShowToast($"Removed project {project.Name}", ToastLevel.Success);
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowToast($"Failed to delete project {project.Name}, {ex.Message}", ToastLevel.Error);
+        }
     }
 }

@@ -15,7 +15,11 @@
         </div>
     </label>
     <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-300 rounded-box w-52">
-        <li><div class="badge">@user.DisplayName</div></li>
+        <li>
+            <div class="badge">
+                <div class=" tooltip" data-tip=@user.UserPrincipalName>@user.DisplayName</div>
+            </div>
+        </li>
         <li><a href="MicrosoftIdentity/Account/SignOut">Logout</a></li>
     </ul>
 </div>
